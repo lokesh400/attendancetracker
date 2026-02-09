@@ -49,6 +49,9 @@ export const clampNumber = (value, min, max) => {
 };
 
 export const getSubjectTotals = (subject) => {
+  const perClassValue = Number.isFinite(subject.attendancePerClass)
+    ? subject.attendancePerClass
+    : DEFAULT_ATTENDANCE_PER_CLASS;
   const totalFromSubject = Number.isFinite(subject.totalClasses)
     ? subject.totalClasses
     : null;
@@ -57,15 +60,21 @@ export const getSubjectTotals = (subject) => {
     : null;
 
   if (totalFromSubject !== null && attendedFromSubject !== null) {
-    const total = Math.max(0, totalFromSubject);
-    const present = Math.min(Math.max(0, attendedFromSubject), total);
-    const absent = Math.max(0, total - present);
+    const totalClasses = Math.max(0, totalFromSubject);
+    const presentClasses = Math.min(Math.max(0, attendedFromSubject), totalClasses);
+    const absentClasses = Math.max(0, totalClasses - presentClasses);
+    const total = totalClasses * perClassValue;
+    const present = presentClasses * perClassValue;
+    const absent = absentClasses * perClassValue;
     return { present, absent, total };
   }
 
   const logs = Array.isArray(subject.logs) ? subject.logs : [];
-  const total = logs.length;
-  const present = logs.filter((log) => log.status === 'present').length;
-  const absent = Math.max(0, total - present);
+  const totalClasses = logs.length;
+  const presentClasses = logs.filter((log) => log.status === 'present').length;
+  const absentClasses = Math.max(0, totalClasses - presentClasses);
+  const total = totalClasses * perClassValue;
+  const present = presentClasses * perClassValue;
+  const absent = absentClasses * perClassValue;
   return { present, absent, total };
 };

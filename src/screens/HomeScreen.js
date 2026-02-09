@@ -1,9 +1,11 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAttendance } from '../context/AttendanceContext';
 import { colors } from '../theme/colors';
 import { formatPercent } from '../utils/attendance';
 import PrimaryButton from '../components/PrimaryButton';
+import SecondaryButton from '../components/SecondaryButton';
 import ProgressRing from '../components/ProgressRing';
 import SectionCard from '../components/SectionCard';
 import SubjectCard from '../components/SubjectCard';
@@ -39,7 +41,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.aggregateRow}>
             <ProgressRing progress={aggregatePercent} label="All Subjects" />
             <View style={styles.aggregateStats}>
-              <Text style={styles.statLabel}>Total classes held</Text>
+              <Text style={styles.statLabel}>Total attendance</Text>
               <Text style={styles.statValue}>{aggregateTotals.total}</Text>
               <Text style={styles.statLabel}>Total attended</Text>
               <Text style={styles.statValue}>{aggregateTotals.present}</Text>
@@ -51,10 +53,18 @@ export default function HomeScreen({ navigation }) {
         </SectionCard>
 
         <SectionCard title="Quick Actions">
-          <PrimaryButton
-            label="Add New Subject"
-            onPress={() => navigation.navigate('AddSubject')}
-          />
+          <View style={styles.actionRow}>
+            <PrimaryButton
+              label="Add New Subject"
+              onPress={() => navigation.navigate('AddSubject')}
+              style={styles.actionButton}
+            />
+            <SecondaryButton
+              label="Tasks"
+              onPress={() => navigation.navigate('Tasks')}
+              style={styles.actionButton}
+            />
+          </View>
         </SectionCard>
 
         <SectionCard title="Subjects">
@@ -109,6 +119,14 @@ const styles = StyleSheet.create({
   },
   aggregateStats: {
     flex: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  actionButton: {
+    flexGrow: 1,
   },
   statLabel: {
     fontSize: 12,

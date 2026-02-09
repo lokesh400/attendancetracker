@@ -4,11 +4,11 @@
     "slug": "classmark",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-1024.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-1242x2436.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,23 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.lokesh400.classmark"
     },
     "web": {
-      "favicon": "./assets/icon.png"
-    }
+      "favicon": "./assets/icon-1024.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ab7713b0-31c1-4ab0-8483-1e0eb18a3f51"
+      }
+    },
+    "owner": "lokesh400",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

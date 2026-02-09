@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAttendance } from '../context/AttendanceContext';
 import { colors } from '../theme/colors';
 import {
@@ -86,11 +87,11 @@ export default function SubjectDetailScreen({ navigation, route }) {
             <View style={styles.overviewStats}>
               <Text style={styles.statLabel}>Attendance per class</Text>
               <Text style={styles.statValue}>{attendancePerClass}</Text>
-              <Text style={styles.statLabel}>Total classes held</Text>
+              <Text style={styles.statLabel}>Total attendance</Text>
               <Text style={styles.statValue}>{summary.total}</Text>
               <Text style={styles.statLabel}>Total attended</Text>
               <Text style={styles.statValue}>{summary.present}</Text>
-              <Text style={styles.statLabel}>Absent</Text>
+              <Text style={styles.statLabel}>Total absent</Text>
               <Text style={styles.statValue}>{summary.absent}</Text>
               <Text style={styles.statMeta}>{percentLabel} overall</Text>
             </View>

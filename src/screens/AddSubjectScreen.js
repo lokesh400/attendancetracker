@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAttendance } from '../context/AttendanceContext';
 import { colors } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';

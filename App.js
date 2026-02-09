@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AttendanceContext } from './src/context/AttendanceContext';
@@ -10,18 +12,19 @@ import {
   computeTotals,
   DEFAULT_ATTENDANCE_PER_CLASS,
   generateId,
-  getSubjectTotals,
 } from './src/utils/attendance';
 import AddSubjectScreen from './src/screens/AddSubjectScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import SubjectDetailScreen from './src/screens/SubjectDetailScreen';
 import SubjectEditScreen from './src/screens/SubjectEditScreen';
+import TaskScreen from './src/screens/TaskScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [subjects, setSubjects] = useState([]);
   const [activeSubjectId, setActiveSubjectId] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -29,6 +32,7 @@ export default function App() {
       const stored = await loadAttendanceState();
       setSubjects(stored.subjects);
       setActiveSubjectId(stored.activeSubjectId);
+      setTasks(stored.tasks ?? []);
       setIsHydrated(true);
     };
 
@@ -37,8 +41,35 @@ export default function App() {
 
   useEffect(() => {
     if (!isHydrated) return;
-    saveAttendanceState({ subjects, activeSubjectId }).catch(() => undefined);
-  }, [subjects, activeSubjectId, isHydrated]);
+    saveAttendanceState({ subjects, activeSubjectId, tasks }).catch(() => undefined);
+  }, [subjects, activeSubjectId, tasks, isHydrated]);
+
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+
+    const setupNotifications = async () => {
+      if (Platform.OS === 'web') return;
+      const settings = await Notifications.getPermissionsAsync();
+      if (settings.status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('tasks', {
+          name: 'Tasks',
+          importance: Notifications.AndroidImportance.DEFAULT,
+          sound: 'default',
+        });
+      }
+    };
+
+    setupNotifications();
+  }, []);
 
   const totals = useMemo(() => computeTotals(subjects), [subjects]);
 
@@ -71,9 +102,18 @@ export default function App() {
     setSubjects((prev) =>
       prev.map((subject) => {
         if (subject.id !== subjectId) return subject;
-        const totals = getSubjectTotals(subject);
-        const totalClasses = totals.total + 1;
-        const attendedClasses = totals.present + (wasPresent ? 1 : 0);
+        const existingTotalClasses = Number.isFinite(subject.totalClasses)
+          ? subject.totalClasses
+          : Array.isArray(subject.logs)
+            ? subject.logs.length
+            : 0;
+        const existingAttendedClasses = Number.isFinite(subject.attendedClasses)
+          ? subject.attendedClasses
+          : Array.isArray(subject.logs)
+            ? subject.logs.filter((log) => log.status === 'present').length
+            : 0;
+        const totalClasses = existingTotalClasses + 1;
+        const attendedClasses = existingAttendedClasses + (wasPresent ? 1 : 0);
         const newLog = {
           id: generateId(),
           status: wasPresent ? 'present' : 'absent',
@@ -95,6 +135,46 @@ export default function App() {
     setActiveSubjectId((current) => (current === subjectId ? null : current));
   };
 
+  const addTask = async (payload) => {
+    const title = payload.title.trim();
+    if (!title) return null;
+
+    const scheduledAt = payload.scheduledAt;
+    let notificationId = null;
+    if (scheduledAt && Platform.OS !== 'web') {
+      try {
+        const settings = await Notifications.getPermissionsAsync();
+        if (settings.status === 'granted') {
+          notificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'Task Reminder',
+              body: payload.notes ? `${title} - ${payload.notes}` : title,
+              sound: 'default',
+              channelId: 'tasks',
+            },
+            trigger: scheduledAt,
+          });
+        }
+      } catch (error) {
+        notificationId = null;
+      }
+    }
+
+    const task = {
+      id: generateId(),
+      title,
+      notes: payload.notes || '',
+      date: payload.date,
+      time: payload.time,
+      scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+      notificationId,
+      createdAt: new Date().toISOString(),
+    };
+
+    setTasks((prev) => [task, ...prev]);
+    return task.id;
+  };
+
   const contextValue = {
     subjects,
     totals,
@@ -104,6 +184,8 @@ export default function App() {
     updateSubject,
     markAttendance,
     deleteSubject,
+    tasks,
+    addTask,
   };
 
   if (!isHydrated) {
@@ -143,6 +225,7 @@ export default function App() {
             component={SubjectEditScreen}
             options={{ title: 'Edit Subject' }}
           />
+          <Stack.Screen name="Tasks" component={TaskScreen} options={{ title: 'Tasks' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </AttendanceContext.Provider>

@@ -5,6 +5,7 @@ const STORAGE_KEY = 'attendance-tracker-state-v1';
 const emptyState = {
   subjects: [],
   activeSubjectId: null,
+  tasks: [],
 };
 
 export const loadAttendanceState = async () => {
@@ -20,6 +21,7 @@ export const loadAttendanceState = async () => {
       return {
         subjects: parsed.subjects,
         activeSubjectId: parsed.activeSubjectId ?? null,
+        tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
       };
     }
   } catch (error) {
